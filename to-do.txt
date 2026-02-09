@@ -1,0 +1,37 @@
+@GetMapping("/me")
+public ResponseEntity<?> me(@AuthenticationPrincipal Jwt jwt) {
+    return ResponseEntity.ok(Map.of(
+        "userId", jwt.getSubject(),
+        "email", jwt.getClaim("email"),
+        "roles", jwt.getClaim("roles")
+    ));
+}
+
+===================================
+
+docker run -d \
+  --name auth-postgres \
+  -p 5432:5432 \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  postgres:16
+
+docker exec -it auth-postgres psql -U postgres
+
+-- AUTH DB
+CREATE USER auth_username WITH PASSWORD 'auth_password';
+CREATE DATABASE auth OWNER auth_username;
+
+-- USER DB
+CREATE USER username_user WITH PASSWORD 'user_password';
+CREATE DATABASE "user" OWNER username_user;
+
+-- Safety grants
+GRANT ALL PRIVILEGES ON DATABASE auth TO auth_username;
+GRANT ALL PRIVILEGES ON DATABASE "user" TO username_user;
+
+    later automate the db creation using
+    docker-entrypoint-initdb.d/
+      └── init.sql
+
+      =========================

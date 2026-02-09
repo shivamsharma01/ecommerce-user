@@ -1,0 +1,11 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://auth.mycompany.com
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/user
+    username: username_user
+    password: ${DB_PASSWORD}
