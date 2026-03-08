@@ -2,6 +2,9 @@ package com.mcart.user.controller;
 
 import com.mcart.user.dto.UserResponse;
 import com.mcart.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,12 +18,14 @@ import java.util.UUID;
 /**
  * REST controller for user profile operations.
  * <p>
- * Serves the current user's profile via the /me endpoint, using the JWT issued by the auth service.
+ * Serves the current user's profile via the /me and /profile endpoints, using the JWT issued by the auth service.
+ * Profile data is synced from the auth service via Pub/Sub when users sign up.
  * </p>
  */
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@Tag(name = "User Profile", description = "Endpoints for fetching user profile details")
 public class UserController {
 
     private static final String CLAIM_USER_ID = "userId";
@@ -37,8 +42,13 @@ public class UserController {
      * @param jwt the JWT from the auth service (subject = authIdentityId, claim userId = userId)
      * @return the user profile, or 404 if the user is not yet synced to this service
      */
-    @GetMapping("/me")
-    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal Jwt jwt) {
+    @GetMapping(value = {"/me", "/profile"})
+    @Operation(
+            summary = "Get current user profile",
+            description = "Returns the profile details of the authenticated user. Requires a valid JWT from the auth service."
+    )
+    @SecurityRequirement(name = "bearer-jwt")
+    public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
         String userIdClaim = jwt.getClaim(CLAIM_USER_ID);
         if (userIdClaim == null) {
             return ResponseEntity.badRequest().build();

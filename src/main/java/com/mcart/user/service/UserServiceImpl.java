@@ -26,6 +26,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private static final String USER_SIGNUP_COMPLETED = "USER_SIGNUP_COMPLETED";
+    private static final String EMAIL_VERIFIED = "EMAIL_VERIFIED";
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -33,12 +34,23 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void handleSignupEvent(UserSignupEvent event) {
-        if (event == null || event.getPayload() == null || event.getUserId() == null) {
+        if (event == null || event.getUserId() == null) {
             log.warn("Ignoring invalid signup event: {}", event);
             return;
         }
+
+        if (EMAIL_VERIFIED.equals(event.getEventType())) {
+            handleEmailVerifiedEvent(event.getUserId());
+            return;
+        }
+
         if (!USER_SIGNUP_COMPLETED.equals(event.getEventType())) {
             log.debug("Ignoring non-signup event type: {}", event.getEventType());
+            return;
+        }
+
+        if (event.getPayload() == null) {
+            log.warn("Ignoring USER_SIGNUP_COMPLETED event with null payload");
             return;
         }
 
@@ -51,6 +63,7 @@ public class UserServiceImpl implements UserService {
             existingUser.setEmail(user.getEmail());
             existingUser.setFirstName(user.getFirstName());
             existingUser.setLastName(user.getLastName());
+            existingUser.setEmailVerified(user.getEmailVerified());
             existingUser.setUpdatedAt(Instant.now());
             userRepository.save(existingUser);
             log.info("Updated user profile for userId={}", userId);
@@ -58,13 +71,26 @@ public class UserServiceImpl implements UserService {
             user.setCreatedAt(Instant.now());
             user.setUpdatedAt(Instant.now());
             userRepository.save(user);
-            log.info("Created user profile for userId={}", userId);
+            log.info("Created user profile for userId={} (verified={})", userId, user.getEmailVerified());
         }
+    }
+
+    private void handleEmailVerifiedEvent(UUID userId) {
+        userRepository.findByUserId(userId).ifPresentOrElse(
+                user -> {
+                    user.setEmailVerified(true);
+                    user.setUpdatedAt(Instant.now());
+                    userRepository.save(user);
+                    log.info("Set email_verified=true for userId={}", userId);
+                },
+                () -> log.warn("EMAIL_VERIFIED event for unknown userId={}", userId)
+        );
     }
 
     @Override
     public Optional<UserResponse> getByUserId(UUID userId) {
         return userRepository.findByUserId(userId)
+                .filter(User::getEmailVerified)
                 .map(userMapper::toResponse);
     }
 }

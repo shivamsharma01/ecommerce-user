@@ -29,14 +29,14 @@ spring:
 
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:dev-project}
+      project-id: ${GCP_PROJECT_ID:my-project-chat-ai-487408}
       credentials:
-        location: ${GCP_CREDENTIALS_PATH:}
+        location: ${GCP_CREDENTIALS_PATH:file:/home/shivam-sharma/.gcp/my-project-chat-ai-487408-5604b2cd4107.json}
       pubsub:
-        enabled: ${GCP_PUBSUB_ENABLED:false}
+        enabled: ${GCP_PUBSUB_ENABLED:true}
 
-# Enable Pub/Sub subscriber when GCP is configured (set user.pubsub.enabled=true in prod)
+# Pub/Sub subscriber for user events (signup + email verified)
 user:
   pubsub:
-    enabled: ${USER_PUBSUB_ENABLED:false}
+    enabled: ${USER_PUBSUB_ENABLED:true}
     subscription: user-signup-events-sub

@@ -25,4 +25,6 @@ public class UserSignupEventPayload {
     private String email;
     private String firstName;
     private String lastName;
+    /** false for password signup; true for social or after EMAIL_VERIFIED event */
+    private Boolean verified;
 }

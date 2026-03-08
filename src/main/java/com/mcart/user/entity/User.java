@@ -35,6 +35,9 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "email_verified", nullable = false)
+    private Boolean emailVerified;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
