@@ -1,7 +1,20 @@
 # Local development profile - auth service runs at localhost:8081
+# Activate with: spring.profiles.active=local
 spring:
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8081
+
+  cloud:
+    gcp:
+      project-id: ${GCP_PROJECT_ID:dev-project}
+      credentials:
+        location: ${GCP_CREDENTIALS_PATH:}
+      pubsub:
+        enabled: ${GCP_PUBSUB_ENABLED:true}
+
+user:
+  pubsub:
+    enabled: ${USER_PUBSUB_ENABLED:true}

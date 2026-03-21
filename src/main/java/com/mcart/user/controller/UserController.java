@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,23 +41,37 @@ public class UserController {
      * </p>
      *
      * @param jwt the JWT from the auth service (subject = authIdentityId, claim userId = userId)
-     * @return the user profile, or 404 if the user is not yet synced to this service
+     * @return the user profile; 404 if user is missing, 403 if user is present but not email-verified
      */
     @GetMapping(value = {"/me", "/profile"})
     @Operation(
             summary = "Get current user profile",
-            description = "Returns the profile details of the authenticated user. Requires a valid JWT from the auth service."
+            description = "Returns the profile details of the authenticated user. Requires a valid JWT from the auth service. Returns 403 if the user exists but is not email-verified."
     )
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal Jwt jwt) {
         String userIdClaim = jwt.getClaim(CLAIM_USER_ID);
-        if (userIdClaim == null) {
+        if (userIdClaim == null || userIdClaim.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
 
-        UUID userId = UUID.fromString(userIdClaim);
-        return userService.getByUserId(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        final UUID userId;
+        try {
+            userId = UUID.fromString(userIdClaim.trim());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        var accessOpt = userService.getProfileAccessByUserId(userId);
+        if (accessOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var access = accessOpt.get();
+        if (access.emailVerified()) {
+            return ResponseEntity.ok(access.profile());
+        }
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 }

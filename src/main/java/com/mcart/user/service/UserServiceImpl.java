@@ -1,6 +1,7 @@
 package com.mcart.user.service;
 
 import com.mcart.user.dto.UserResponse;
+import com.mcart.user.dto.UserProfileAccess;
 import com.mcart.user.dto.UserSignupEvent;
 import com.mcart.user.entity.User;
 import com.mcart.user.mapper.UserMapper;
@@ -63,7 +64,9 @@ public class UserServiceImpl implements UserService {
             existingUser.setEmail(user.getEmail());
             existingUser.setFirstName(user.getFirstName());
             existingUser.setLastName(user.getLastName());
-            existingUser.setEmailVerified(user.getEmailVerified());
+            // Never downgrade verification on replayed / stale USER_SIGNUP_COMPLETED events
+            existingUser.setEmailVerified(
+                    existingUser.getEmailVerified() || Boolean.TRUE.equals(user.getEmailVerified()));
             existingUser.setUpdatedAt(Instant.now());
             userRepository.save(existingUser);
             log.info("Updated user profile for userId={}", userId);
@@ -92,5 +95,14 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUserId(userId)
                 .filter(User::getEmailVerified)
                 .map(userMapper::toResponse);
+    }
+
+    @Override
+    public Optional<UserProfileAccess> getProfileAccessByUserId(UUID userId) {
+        return userRepository.findByUserId(userId)
+                .map(user -> new UserProfileAccess(
+                        userMapper.toResponse(user),
+                        Boolean.TRUE.equals(user.getEmailVerified())
+                ));
     }
 }

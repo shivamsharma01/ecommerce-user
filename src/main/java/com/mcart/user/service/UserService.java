@@ -1,8 +1,8 @@
 package com.mcart.user.service;
 
 import com.mcart.user.dto.UserResponse;
+import com.mcart.user.dto.UserProfileAccess;
 import com.mcart.user.dto.UserSignupEvent;
-import com.mcart.user.entity.User;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -29,4 +29,13 @@ public interface UserService {
      * @return the user profile if found
      */
     Optional<UserResponse> getByUserId(UUID userId);
+
+    /**
+     * Retrieves the user profile and email verification status.
+     * <p>
+     * Allows the controller to distinguish between {@code 404} (user missing)
+     * and {@code 403} (user present but unverified).
+     * </p>
+     */
+    Optional<UserProfileAccess> getProfileAccessByUserId(UUID userId);
 }

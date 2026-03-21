@@ -1,6 +1,20 @@
 server:
   port: 8082
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /
+      path-mapping:
+        health: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
 spring:
   application:
     name: user
@@ -29,14 +43,14 @@ spring:
 
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:my-project-chat-ai-487408}
+      project-id: ${GCP_PROJECT_ID:dev-project}
       credentials:
-        location: ${GCP_CREDENTIALS_PATH:file:/home/shivam-sharma/.gcp/my-project-chat-ai-487408-5604b2cd4107.json}
+        location: ${GCP_CREDENTIALS_PATH:}
       pubsub:
-        enabled: ${GCP_PUBSUB_ENABLED:true}
+        enabled: ${GCP_PUBSUB_ENABLED:false}
 
-# Pub/Sub subscriber for user events (signup + email verified)
+# Pub/Sub subscriber for user events (signup + email verified); enable via env or application-local
 user:
   pubsub:
-    enabled: ${USER_PUBSUB_ENABLED:true}
+    enabled: ${USER_PUBSUB_ENABLED:false}
     subscription: user-signup-events-sub

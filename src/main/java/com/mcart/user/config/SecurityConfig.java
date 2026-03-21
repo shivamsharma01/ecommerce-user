@@ -1,7 +1,5 @@
-package com.mcart.user.utils;
+package com.mcart.user.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -11,29 +9,24 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Security configuration for the user service.
- * <p>
- * Configures OAuth2 resource server with JWT validation. JWTs are issued by the
- * auth service and validated using the configured issuer URI.
- * </p>
+ * HTTP security: OAuth2 resource server (JWT) and public paths for docs, actuator health, and Kubernetes probes.
  */
 @Configuration
 @EnableMethodSecurity
-public class JwtConfig {
-
-    /**
-     * Configures the security filter chain.
-     *
-     * @param http the HTTP security builder
-     * @return the configured security filter chain
-     */
+public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        .requestMatchers(
+                                "/actuator/**",
+                                "/health",
+                                "/health/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->
@@ -42,13 +35,4 @@ public class JwtConfig {
 
         return http.build();
     }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        return mapper;
-    }
-
 }
-
