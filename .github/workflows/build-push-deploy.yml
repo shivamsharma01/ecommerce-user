@@ -1,0 +1,81 @@
+# Push to main → build Docker image → push to GHCR → optionally kubectl apply.
+#
+# Image:  ghcr.io/<owner_lowercase>/user:<short_sha>  and  :latest
+# Substitutes in k8s manifests: <ARTIFACT_REGISTRY_URL> = ghcr.io/<owner_lowercase> , <VERSION> = short SHA
+#
+# Permissions: packages: write (uses GITHUB_TOKEN).
+# Optional: repository secret KUBE_CONFIG = base64-encoded kubeconfig to enable deploy.
+
+name: user-service — build, push, deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_SHORT_NAME: user
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Metadata (tag, GHCR prefix)
+        id: meta
+        run: |
+          OWNER_LOWER="$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+          TAG="${GITHUB_SHA::7}"
+          echo "owner_lower=${OWNER_LOWER}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "registry_prefix=ghcr.io/${OWNER_LOWER}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner_lower }}/${{ env.IMAGE_SHORT_NAME }}:${{ steps.meta.outputs.tag }}
+            ghcr.io/${{ steps.meta.outputs.owner_lower }}/${{ env.IMAGE_SHORT_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Deploy to Kubernetes (optional)
+        env:
+          KUBE_B64: ${{ secrets.KUBE_CONFIG }}
+          REGISTRY_PREFIX: ${{ steps.meta.outputs.registry_prefix }}
+          VERSION_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          if [ -z "${KUBE_B64}" ]; then
+            echo "KUBE_CONFIG secret not set — skipping cluster deploy."
+            exit 0
+          fi
+          mkdir -p ~/.kube
+          echo "${KUBE_B64}" | base64 -d > ~/.kube/config
+          tmp="$(mktemp -d)"
+          for f in k8s/deployment.yaml k8s/service.yaml; do
+            sed -e "s|<ARTIFACT_REGISTRY_URL>|${REGISTRY_PREFIX}|g" \
+                -e "s|<VERSION>|${VERSION_TAG}|g" \
+                "$f" > "${tmp}/$(basename "$f")"
+          done
+          kubectl apply -f "${tmp}/deployment.yaml"
+          kubectl apply -f "${tmp}/service.yaml"
+          kubectl rollout status deployment/user --timeout=120s
