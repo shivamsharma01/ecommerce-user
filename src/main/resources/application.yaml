@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 management:
   endpoints:
@@ -18,39 +18,29 @@ management:
 spring:
   application:
     name: user
-
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${AUTH_ISSUER_URI:https://auth.mycompany.com}
-
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
-
+          issuer-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI:http://localhost:8081}
   datasource:
-    url: jdbc:postgresql://localhost:5432/user
-    username: ${DB_USERNAME:user_user}
-    password: ${DB_PASSWORD:user_password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/user}
+    username: ${SPRING_DATASOURCE_USERNAME:user_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:user_password}
     hikari:
       maximum-pool-size: 10
-
   jpa:
     hibernate:
       ddl-auto: none
-
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:dev-project}
+      project-id: ${SPRING_CLOUD_GCP_PROJECT_ID:dev-project}
       credentials:
-        location: ${GCP_CREDENTIALS_PATH:}
+        location: ${SPRING_CLOUD_GCP_CREDENTIALS_LOCATION:}
       pubsub:
-        enabled: ${GCP_PUBSUB_ENABLED:false}
+        enabled: ${SPRING_CLOUD_GCP_PUBSUB_ENABLED:false}
 
-# Pub/Sub subscriber for user events (signup + email verified); enable via env or application-local
 user:
   pubsub:
     enabled: ${USER_PUBSUB_ENABLED:false}
-    subscription: user-signup-events-sub
+    subscription: ${USER_PUBSUB_SUBSCRIPTION:user-signup-events-sub}

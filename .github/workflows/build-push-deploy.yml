@@ -1,7 +1,7 @@
 # Push to main → build Docker image → push to GHCR → optionally kubectl apply.
 #
 # Image:  ghcr.io/<owner_lowercase>/user:<short_sha>  and  :latest
-# Substitutes in k8s manifests: <ARTIFACT_REGISTRY_URL> = ghcr.io/<owner_lowercase> , <VERSION> = short SHA
+# Substitutes in ecomm-infra/deploy/k8s/apps/user/*.yaml: <ARTIFACT_REGISTRY_URL>, <VERSION>
 #
 # Permissions: packages: write (uses GITHUB_TOKEN).
 # Optional: repository secret KUBE_CONFIG = base64-encoded kubeconfig to enable deploy.
@@ -71,11 +71,16 @@ jobs:
           mkdir -p ~/.kube
           echo "${KUBE_B64}" | base64 -d > ~/.kube/config
           tmp="$(mktemp -d)"
-          for f in k8s/deployment.yaml k8s/service.yaml; do
+          MANIFEST_DIR="ecomm-infra/deploy/k8s/apps/user"
+          if [ ! -f "${MANIFEST_DIR}/deployment.yaml" ]; then
+            echo "Expected monorepo layout: ${MANIFEST_DIR}/deployment.yaml (checkout repository root)."
+            exit 1
+          fi
+          for f in deployment.yaml service.yaml; do
             sed -e "s|<ARTIFACT_REGISTRY_URL>|${REGISTRY_PREFIX}|g" \
                 -e "s|<VERSION>|${VERSION_TAG}|g" \
-                "$f" > "${tmp}/$(basename "$f")"
+                "${MANIFEST_DIR}/${f}" > "${tmp}/${f}"
           done
-          kubectl apply -f "${tmp}/deployment.yaml"
-          kubectl apply -f "${tmp}/service.yaml"
-          kubectl rollout status deployment/user --timeout=120s
+          kubectl apply -n mcart -f "${tmp}/deployment.yaml"
+          kubectl apply -n mcart -f "${tmp}/service.yaml"
+          kubectl rollout status deployment/user -n mcart --timeout=120s
