@@ -7,7 +7,7 @@ User profile and account APIs backed by PostgreSQL; subscribes to **user-signup-
 - Java 17
 - PostgreSQL for a real run
 
-**Database schema** is applied by **Flyway Jobs** in `ecomm-infra/deploy/helm/mcart-bootstrap` (SQL under `files/user/`). The app does not run migrations on startup. For local PostgreSQL, see `ecomm-infra/docs/deployment-bootstrap.md` — local migrations.
+**Database schema** is applied by **Flyway Jobs** in `ecomm-infra/deploy/helm/mcart-bootstrap` (SQL under `files/user/`). The app does not run migrations on startup. For local PostgreSQL, see **`ecomm-infra/README.md`** §2 — local migrations.
 
 ## Run locally
 
@@ -36,4 +36,4 @@ The `test` profile uses in-memory H2 (see `src/test/resources/application-test.y
 
 ## Kubernetes
 
-Manifests: **`ecomm-infra/deploy/k8s/apps/user/`**. Apply with `ecomm-infra/deploy/Makefile` (`make apps-apply`). Secrets: `ecomm-infra/docs/kubernetes-secrets-production.md`.
+Manifests: **`ecomm-infra/deploy/k8s/apps/user/`**. Apply with `ecomm-infra/deploy/Makefile` (`make apps-apply`). Secrets: **`ecomm-infra/README.md`** §3.
