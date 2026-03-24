@@ -9,12 +9,15 @@ spring:
 
   cloud:
     gcp:
-      project-id: ${GCP_PROJECT_ID:dev-project}
+      project-id: "${MCART_GCP_PROJECT_ID:${GOOGLE_CLOUD_PROJECT:my-project-chat-ai-487408}}"
       credentials:
         location: ${GCP_CREDENTIALS_PATH:}
       pubsub:
         enabled: ${GCP_PUBSUB_ENABLED:true}
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/user}
 user:
   pubsub:
     enabled: ${USER_PUBSUB_ENABLED:true}
+

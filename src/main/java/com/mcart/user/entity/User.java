@@ -14,7 +14,7 @@ import java.util.UUID;
  * </p>
  */
 @Entity
-@Table(name = "\"user\"")
+@Table(name = "user_profile")
 @Getter
 @Setter
 @NoArgsConstructor
