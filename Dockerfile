@@ -1,8 +1,8 @@
-# Multi-stage: build with JDK, run with JRE. Layered JAR for faster starts and better layer cache.
-# Build: docker build -t user:<tag> .
-# Run:   docker run --rm -p 8082:8082 -e SPRING_DATASOURCE_URL=... user:<tag>
+# Multi-stage: build with JDK, run with JRE.
+# This intentionally runs the fat jar with `java -jar` to avoid classpath/layout issues
+# that can cause `org.springframework.boot.loader.launch.JarLauncher` ClassNotFound at runtime.
 
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
 COPY gradlew settings.gradle build.gradle ./
@@ -11,20 +11,16 @@ RUN chmod +x gradlew \
     && ./gradlew dependencies --no-daemon
 
 COPY src ./src
-RUN ./gradlew bootJar --no-daemon -x test
+RUN ./gradlew bootJar --no-daemon -x test \
+    && JAR_FILE=$(ls build/libs/*.jar | grep -v plain | head -n1) \
+    && cp "$JAR_FILE" /app/app.jar
 
-WORKDIR /app/layers
-RUN java -Djarmode=tools -jar /app/build/libs/*.jar extract --layers --destination .
-
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:21-jre-alpine AS runtime
 
 RUN addgroup -S -g 1000 spring && adduser -S -u 1000 -G spring spring
 
 WORKDIR /app
-COPY --from=builder --chown=spring:spring /app/layers/dependencies/ ./
-COPY --from=builder --chown=spring:spring /app/layers/spring-boot-loader/ ./
-COPY --from=builder --chown=spring:spring /app/layers/snapshot-dependencies/ ./
-COPY --from=builder --chown=spring:spring /app/layers/application/ ./
+COPY --from=builder --chown=spring:spring /app/app.jar /app/app.jar
 
 USER spring:spring
 
@@ -32,4 +28,4 @@ EXPOSE 8082
 
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
 
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
