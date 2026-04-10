@@ -8,9 +8,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * HTTP security: OAuth2 resource server (JWT) and public paths for docs, actuator health, and Kubernetes probes.
- */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -23,9 +20,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/**",
                                 "/health",
-                                "/health/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**"
+                                "/health/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
