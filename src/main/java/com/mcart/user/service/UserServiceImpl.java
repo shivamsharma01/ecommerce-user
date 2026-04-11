@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void handleSignupEvent(UserSignupEvent event) {
         if (event == null || event.getUserId() == null) {
-            log.warn("Ignoring invalid signup event: {}", event);
+            log.warn("Ignoring invalid signup event (missing userId)");
             return;
         }
 
