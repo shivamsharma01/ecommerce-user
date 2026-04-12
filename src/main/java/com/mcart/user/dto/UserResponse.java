@@ -8,9 +8,6 @@ import lombok.Setter;
 
 import java.util.UUID;
 
-/**
- * Response DTO for user profile data returned by the user service.
- */
 @Getter
 @Setter
 @NoArgsConstructor

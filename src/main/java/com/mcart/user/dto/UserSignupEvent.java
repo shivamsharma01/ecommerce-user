@@ -11,10 +11,6 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * Full event structure published to {@code user-signup-events} by the auth service
- * {@link com.mcart.auth.task.OutboxPublisherJob}.
- */
 @Getter
 @Setter
 @NoArgsConstructor

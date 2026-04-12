@@ -37,7 +37,7 @@ class UserServiceImplTest {
     private UserMapper userMapper;
 
     @InjectMocks
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @Test
     void handleSignupEvent_nullEvent_isIgnored() {

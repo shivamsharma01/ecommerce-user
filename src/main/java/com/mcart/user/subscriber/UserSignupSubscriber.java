@@ -13,14 +13,6 @@ import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-/**
- * Subscribes to the {@code user-signup-events} Pub/Sub topic and delegates
- * event processing to {@link UserService}.
- * <p>
- * Messages are published by the auth service {@link com.mcart.auth.task.OutboxPublisherJob}
- * after successful password signup.
- * </p>
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -38,18 +30,12 @@ public class UserSignupSubscriber {
 
     private com.google.cloud.pubsub.v1.Subscriber subscriber;
 
-    /**
-     * Starts the Pub/Sub subscription on application startup.
-     */
     @PostConstruct
     public void subscribe() {
         subscriber = pubSubTemplate.subscribe(subscriptionName, this::handleMessage);
         log.info("Subscribed to Pub/Sub subscription: {}", subscriptionName);
     }
 
-    /**
-     * Stops the subscription on application shutdown.
-     */
     @PreDestroy
     public void shutdown() {
         if (subscriber != null) {

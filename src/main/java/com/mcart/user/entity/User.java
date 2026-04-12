@@ -6,13 +6,6 @@ import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * User profile entity persisted by the user service.
- * <p>
- * User records are created when the auth service publishes {@code USER_SIGNUP_COMPLETED}
- * events to the {@code user-signup-events} Pub/Sub topic after successful signup.
- * </p>
- */
 @Entity
 @Table(name = "user_profile")
 @Getter

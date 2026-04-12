@@ -7,13 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Payload structure for {@code USER_SIGNUP_COMPLETED} events published by the auth service
- * to the {@code user-signup-events} Pub/Sub topic.
- * <p>
- * Matches the payload written by {@code AuthServiceImpl.signupWithPassword}.
- * </p>
- */
 @Getter
 @Setter
 @NoArgsConstructor
