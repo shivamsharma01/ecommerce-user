@@ -25,14 +25,18 @@ public class UserAddressController {
     @GetMapping
     public ResponseEntity<List<UserAddressResponse>> list(@AuthenticationPrincipal Jwt jwt) {
         var gate = gatekeep(jwt);
-        if (gate.response != null) return gate.response;
+        if (gate.response != null) {
+            return narrow(gate.response);
+        }
         return ResponseEntity.ok(userService.listAddresses(gate.userId));
     }
 
     @GetMapping("/default")
     public ResponseEntity<UserAddressResponse> getDefault(@AuthenticationPrincipal Jwt jwt) {
         var gate = gatekeep(jwt);
-        if (gate.response != null) return (ResponseEntity<UserAddressResponse>) gate.response;
+        if (gate.response != null) {
+            return narrow(gate.response);
+        }
         return userService.getDefaultAddress(gate.userId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -44,7 +48,9 @@ public class UserAddressController {
             @PathVariable("addressId") UUID addressId
     ) {
         var gate = gatekeep(jwt);
-        if (gate.response != null) return (ResponseEntity<UserAddressResponse>) gate.response;
+        if (gate.response != null) {
+            return narrow(gate.response);
+        }
         return userService.getAddressById(gate.userId, addressId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -56,7 +62,9 @@ public class UserAddressController {
             @RequestBody UserAddressRequest req
     ) {
         var gate = gatekeep(jwt);
-        if (gate.response != null) return (ResponseEntity<UserAddressResponse>) gate.response;
+        if (gate.response != null) {
+            return narrow(gate.response);
+        }
         UserAddressResponse created = userService.addAddress(gate.userId, req != null ? req : new UserAddressRequest());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -67,7 +75,9 @@ public class UserAddressController {
             @PathVariable("addressId") UUID addressId
     ) {
         var gate = gatekeep(jwt);
-        if (gate.response != null) return (ResponseEntity<UserAddressResponse>) gate.response;
+        if (gate.response != null) {
+            return narrow(gate.response);
+        }
         return userService.setDefault(gate.userId, addressId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -96,6 +106,14 @@ public class UserAddressController {
             return new GateResult(null, ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
         return new GateResult(userId, null);
+    }
+
+    /**
+     * Error responses are bodiless status-only; safe to narrow for the declared controller return type.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> ResponseEntity<T> narrow(ResponseEntity<?> response) {
+        return (ResponseEntity<T>) response;
     }
 
     private record GateResult(UUID userId, ResponseEntity<?> response) {}
